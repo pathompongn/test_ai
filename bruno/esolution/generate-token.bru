@@ -1,0 +1,74 @@
+meta {
+  name: Generate Token
+  type: http
+  seq: 1
+}
+
+post {
+  url: https://intapigw-uat1.esolnonprd.krungthai/ktb/rest/esolution/v1/authentication/generateToken
+  body: json
+  auth: none
+}
+
+headers {
+  Accept: application/json, text/plain, */*
+  Content-Type: application/json
+  Referer: https://esolution-ui-uat1.esolnonprd.krungthai/
+  User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36
+  sec-ch-ua: "Not:A-Brand";v="99", "Google Chrome";v="145", "Chromium";v="145"
+  sec-ch-ua-mobile: ?0
+  sec-ch-ua-platform: "Windows"
+}
+
+body:json {
+  {
+    "username": "20580",
+    "password": "P@ssw0rd",
+    "uuid": "e93d2bbb-841d-4089-a2be-33f37c06d5dc",
+    "mode": "force"
+  }
+}
+
+tests {
+  test("Response status should be 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("Response should contain all required attributes", function() {
+    expect(res.body).to.have.property('accessToken');
+    expect(res.body).to.have.property('refreshToken');
+    expect(res.body).to.have.property('sessionState');
+    expect(res.body).to.have.property('lastSuccessLogin');
+  });
+
+  test("Response attributes should have correct data types", function() {
+    expect(typeof res.body.accessToken).to.equal('string');
+    expect(typeof res.body.refreshToken).to.equal('string');
+    expect(typeof res.body.sessionState).to.equal('string');
+    expect(typeof res.body.lastSuccessLogin).to.equal('string');
+  });
+
+  test("Tokens and session fields should not be empty", function() {
+    expect(res.body.accessToken).to.not.be.empty;
+    expect(res.body.refreshToken).to.not.be.empty;
+    expect(res.body.sessionState).to.not.be.empty;
+    expect(res.body.lastSuccessLogin).to.not.be.empty;
+  });
+
+  test("Tokens should look like JWT values", function() {
+    expect(res.body.accessToken).to.match(/^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+$/);
+    expect(res.body.refreshToken).to.match(/^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+$/);
+  });
+
+  test("Session state should be UUID format", function() {
+    expect(res.body.sessionState).to.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
+  });
+
+  test("Last success login should be ISO 8601 datetime", function() {
+    expect(res.body.lastSuccessLogin).to.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/);
+  });
+
+  test("Access token and refresh token should be different values", function() {
+    expect(res.body.accessToken).to.not.equal(res.body.refreshToken);
+  });
+}
